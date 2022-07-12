@@ -14,6 +14,8 @@ import javafx.animation.PauseTransition;
 import javafx.animation.RotateTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -22,10 +24,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.ToolBar;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
@@ -94,6 +93,10 @@ public class AppController implements Initializable {
     public TextFlow message;
     @FXML
     public Button clearButton;
+    @FXML
+    public Slider sliderSpeed;
+    @FXML
+    public Label messageSpeed;
 
     private boolean panelVisable = false;
     private boolean isExample;
@@ -103,7 +106,7 @@ public class AppController implements Initializable {
     private boolean creatButton = false;
     Robot robot = new Robot();
     Edge currentLine;
-
+    long timeSpeed = 1;
 
     static class InitMenu {
         TranslateTransition translateTransition;
@@ -112,6 +115,7 @@ public class AppController implements Initializable {
 
         Node container;
         boolean isShow = false;
+
 
         public InitMenu(Node container, Label label) {
             this.container = container;
@@ -340,7 +344,7 @@ public class AppController implements Initializable {
             return;
         if (isEmpty() && creatButton)
             return;
-        if (isExample && creatButton)
+        if (isExample && !creatButton)
             clearAction();
         isExample = false;
         message.getChildren().clear();
@@ -362,7 +366,21 @@ public class AppController implements Initializable {
         graph.getEdges().removeAll(graph.getEdges());
     }
 
+    public void setSpeed(){
+        double x = sliderSpeed.getValue() * 1000;
+        timeSpeed = (long) x;
+        System.out.println("x" + sliderSpeed.getValue() + " " + timeSpeed);
+        messageSpeed.setText(String.format("x%.1f", sliderSpeed.getValue()));
+    }
 
+    public void moveSpeed(){
+        sliderSpeed.valueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observableValue, Number number, Number t1) {
+                messageSpeed.setText(String.format("x%.1f",(Double) t1));
+            }
+        });
+    }
 
     public void executeDFS()
     {
@@ -418,7 +436,7 @@ public class AppController implements Initializable {
                             Platform.runLater(detail::run);
                         });
                     }
-                    Thread.sleep(1000);
+                    Thread.sleep(timeSpeed);
                 }
                 return null;
             }
@@ -483,7 +501,7 @@ public class AppController implements Initializable {
 	                            Platform.runLater(detail::run);
 	                        });
 	                    }
-	                    Thread.sleep(1000);
+	                    Thread.sleep(timeSpeed);
 	                }
 	                return null;
 	            }
@@ -551,7 +569,7 @@ public class AppController implements Initializable {
                             Platform.runLater(detail::run);
                         });
                     }
-                    Thread.sleep(1000);
+                    Thread.sleep(timeSpeed);
                 }
                 return null;
             }
