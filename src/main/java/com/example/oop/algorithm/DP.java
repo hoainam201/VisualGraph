@@ -41,13 +41,15 @@ public class DP extends Algorithm{
         	
     	while(!topoStack.isEmpty()) { 	
     		convertStack();
+    		Collections.reverse(adjList);
     		PseudoStep step2 = new PseudoStep(1);
         	pseudoSteps.add(step2);
-        	step2.addStep(new soloStep("current topological sort:["  + adjList + "]"));
+        	step2.addStep(new soloStep("current topological sort:["  + getIdList + "]"));
         	
     		v = topoStack.lastElement();
     		traverser(v);
     		topoStack.remove(topoStack.lastElement());
+    		getIdList = new ArrayList<>();
     	}
 		super.getData().clearHighlight();
     }
@@ -147,10 +149,9 @@ public class DP extends Algorithm{
     }
     
     public static void convertStack() {
+		int i = 0;
 		for (Vertex vertex : topoStack) {
-			int i = 0;
 			getIdList.add(vertex.getID());
-			System.out.println(vertex.getID() + " " + getIdList.get(i));
 			i++;
 		}
 	}
