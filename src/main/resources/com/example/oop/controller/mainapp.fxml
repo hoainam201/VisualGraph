@@ -9,57 +9,13 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.TextFlow?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseMoved="#exitEvent" prefHeight="800.0" prefWidth="1200.0" style="-fx-background-radius: 10px; -fx-background-color: #222426;-fx-fill: transparent;" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.oop.controller.AppController">
-    <AnchorPane fx:id="main" layoutX="61.0" layoutY="44.0" maxHeight="744.0" maxWidth="1070.0" onMouseClicked="#addOrLink" onMouseMoved="#drawLine" prefHeight="744.0" prefWidth="1070.0" style="-fx-background-color: #FEF0EF; -fx-background-radius: 10px; -fx-cursor: hand;">
-      <children>
-         <ToolBar fx:id="DFSBox" focusTraversable="false" layoutX="109.0" layoutY="631.0" prefHeight="38.0" prefWidth="94.0" style="-fx-background-radius: 10px; -fx-background-color: #000000;" visible="false">
-            <items>
-               <VBox prefHeight="20.0" prefWidth="42.0" style="-fx-background-radius: 10px;-fx-background-color: #808080;">
-                  <children>
-                     <TextArea fx:id="DFSGo" prefHeight="29.0" prefWidth="36.0">
-                        <font>
-                           <Font size="9.0" />
-                        </font>
-                     </TextArea>
-                  </children>
-               </VBox>
-               <Button mnemonicParsing="false" onAction="#executeDFS" style="-fx-background-color: FE8381;" text="Go" />
-            </items>
-         </ToolBar>
-         <ToolBar fx:id="DPBox" layoutX="109.0" layoutY="669.0" prefHeight="38.0" prefWidth="94.0" style="-fx-background-radius: 10px; -fx-background-color: #000000;" visible="false">
-            <items>
-               <VBox prefHeight="30.0" prefWidth="42.0" style="-fx-background-radius: 10px; -fx-background-color: #808080;">
-                  <children>
-                     <TextArea fx:id="DPGo" prefHeight="30.0" prefWidth="34.0">
-                        <font>
-                           <Font size="9.0" />
-                        </font>
-                     </TextArea>
-                  </children>
-               </VBox>
-               <Button mnemonicParsing="false" onAction="#executeDP" style="-fx-background-color: FE8381;" text="Go" />
-            </items>
-         </ToolBar>
-         <ToolBar fx:id="djsBox" layoutX="108.0" layoutY="707.0" prefHeight="38.0" prefWidth="94.0" style="-fx-background-radius: 10px; -fx-background-color: #000000;" visible="false">
-            <items>
-               <VBox prefHeight="14.0" prefWidth="42.0" style="-fx-background-radius: 10px; -fx-background-color: #808080;">
-                  <children>
-                     <TextArea fx:id="djsGo" prefHeight="32.0" prefWidth="42.0">
-                        <font>
-                           <Font size="9.0" />
-                        </font>
-                     </TextArea>
-                  </children>
-               </VBox>
-               <Button mnemonicParsing="false" onAction="#executeDijkstra" style="-fx-background-color: FE8381;" text="Go" />
-            </items>
-         </ToolBar>
-      </children></AnchorPane>
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseMoved="#exitEvent" prefHeight="800.0" prefWidth="1200.0" style="-fx-background-radius: 5px; -fx-background-color: #222426;-fx-fill: transparent;" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.oop.controller.AppController">
+    <AnchorPane fx:id="main" layoutX="61.0" layoutY="44.0" maxHeight="744.0" maxWidth="1070.0" onMouseClicked="#addOrLink" onMouseMoved="#drawLine" prefHeight="739.0" prefWidth="1070.0" style="-fx-background-color: #FEF0EF; -fx-background-radius: 10px; -fx-cursor: hand;" />
     <VBox fx:id="panel" layoutX="48.0" layoutY="601.0" prefHeight="186.0" prefWidth="100.0" style="-fx-cursor: hand; -fx-background-color: FE8381; -fx-background-radius: 10px;" visible="false">
         <Button fx:id="newGraph" mnemonicParsing="false" onAction="#CreateGraph" prefHeight="37.0" prefWidth="100.0" style="-fx-background-radius: 10px; -fx-background-color: FE8381; -fx-cursor: hand;" text="Draw Graph" />
-        <Button mnemonicParsing="false" prefHeight="37.0" prefWidth="100.0" style="-fx-background-radius: 10px; -fx-background-color: FE8381; -fx-cursor: hand;" text="Example Graph" />
+        <Button mnemonicParsing="false" onAction="#showExample" prefHeight="37.0" prefWidth="100.0" style="-fx-background-radius: 10px; -fx-background-color: FE8381; -fx-cursor: hand;" text="Example Graph" />
         <Button fx:id="dfs" mnemonicParsing="false" onAction="#showDfsBox" prefHeight="37.0" prefWidth="100.0" style="-fx-background-radius: 10px; -fx-background-color: FE8381; -fx-cursor: hand;" text="DFS" />
-        <Button fx:id="db" mnemonicParsing="false" onAction="#showDPBox" prefHeight="37.0" prefWidth="100.0" style="-fx-background-radius: 10px; -fx-background-color: FE8381; -fx-cursor: hand;" text="DB" />
+        <Button fx:id="db" mnemonicParsing="false" onAction="#showDPBox" prefHeight="37.0" prefWidth="100.0" style="-fx-background-radius: 10px; -fx-background-color: FE8381; -fx-cursor: hand;" text="DP" />
         <Button fx:id="djs" mnemonicParsing="false" onAction="#showDijBox" prefHeight="37.0" prefWidth="100.0" style="-fx-background-radius: 10px; -fx-background-color:  FE8381 ; -fx-cursor: hand;" text="Dijkstra" />
 
     </VBox>
@@ -100,6 +56,49 @@
          <Font name="System Bold" size="23.0" />
       </font>
    </Label>
-   <Button fx:id="exitButton" layoutX="1164.0" layoutY="1.0" mnemonicParsing="false" onAction="#exit" onMouseMoved="#exitEvent" prefHeight="26.0" prefWidth="34.0" style="-fx-background-radius: 10px; -fx-background-color: #222426;" text="X" textAlignment="CENTER" textFill="WHITE" />
+   <Button fx:id="exitButton" layoutX="1164.0" layoutY="1.0" mnemonicParsing="false" onAction="#exit" onMouseMoved="#exitEvent" prefHeight="26.0" prefWidth="34.0" style="-fx-background-radius: 5px; -fx-background-color: #222426;" text="X" textAlignment="CENTER" textFill="WHITE" />
    <TextFlow fx:id="message" layoutX="327.0" layoutY="10.0" prefHeight="26.0" prefWidth="578.0" />
+   <ToolBar fx:id="DFSBox" focusTraversable="false" layoutX="174.0" layoutY="673.0" prefHeight="38.0" prefWidth="94.0" style="-fx-background-radius: 10px; -fx-background-color: #000000;" visible="false">
+      <items>
+         <VBox prefHeight="20.0" prefWidth="42.0" style="-fx-background-radius: 10px;-fx-background-color: #808080;">
+            <children>
+               <TextArea fx:id="DFSGo" prefHeight="29.0" prefWidth="36.0">
+                  <font>
+                     <Font size="9.0" />
+                  </font>
+               </TextArea>
+            </children>
+         </VBox>
+         <Button mnemonicParsing="false" onAction="#executeDFS" style="-fx-background-color: FE8381;" text="Go" />
+      </items>
+   </ToolBar>
+   <ToolBar fx:id="DPBox" layoutX="174.0" layoutY="711.0" prefHeight="38.0" prefWidth="94.0" style="-fx-background-radius: 10px; -fx-background-color: #000000;" visible="false">
+      <items>
+         <VBox prefHeight="30.0" prefWidth="42.0" style="-fx-background-radius: 10px; -fx-background-color: #808080;">
+            <children>
+               <TextArea fx:id="DPGo" prefHeight="30.0" prefWidth="34.0">
+                  <font>
+                     <Font size="9.0" />
+                  </font>
+               </TextArea>
+            </children>
+         </VBox>
+         <Button mnemonicParsing="false" onAction="#executeDP" style="-fx-background-color: FE8381;" text="Go" />
+      </items>
+   </ToolBar>
+   <ToolBar fx:id="djsBox" layoutX="173.0" layoutY="749.0" prefHeight="38.0" prefWidth="94.0" style="-fx-background-radius: 10px; -fx-background-color: #000000;" visible="false">
+      <items>
+         <VBox prefHeight="14.0" prefWidth="42.0" style="-fx-background-radius: 10px; -fx-background-color: #808080;">
+            <children>
+               <TextArea fx:id="djsGo" prefHeight="32.0" prefWidth="42.0">
+                  <font>
+                     <Font size="9.0" />
+                  </font>
+               </TextArea>
+            </children>
+         </VBox>
+         <Button mnemonicParsing="false" onAction="#executeDijkstra" style="-fx-background-color: FE8381;" text="Go" />
+      </items>
+   </ToolBar>
+   <Button fx:id="clearButton" layoutX="174.0" layoutY="603.0" mnemonicParsing="false" onAction="#clearAction" style="-fx-background-radius: 10; -fx-background-color: FE8381" text="Clear" visible="false" />
 </AnchorPane>

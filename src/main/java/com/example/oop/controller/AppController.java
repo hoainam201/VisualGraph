@@ -91,8 +91,11 @@ public class AppController implements Initializable {
     public TextArea djsGo;
     @FXML
     public TextFlow message;
+    @FXML
+    public Button clearButton;
 
     private boolean panelVisable = false;
+    private boolean isExample;
 
     Graph graph = new Graph();
     private boolean isDrag = false;
@@ -180,8 +183,10 @@ public class AppController implements Initializable {
     }
 
     public void showDfsBox() {
+        message.getChildren().clear();
         if (isEmpty())
             return;
+        clearButton.setVisible(false);
         newGraph.setText("On Draw");
         creatButton = false;
         DFSBox.setVisible(!DFSBox.isVisible());
@@ -190,8 +195,10 @@ public class AppController implements Initializable {
     }
 
     public void showDPBox() {
+        message.getChildren().clear();
         if (isEmpty())
             return;
+        clearButton.setVisible(false);
         newGraph.setText("On Draw");
         creatButton = false;
         DPBox.setVisible(!DPBox.isVisible());
@@ -200,8 +207,10 @@ public class AppController implements Initializable {
     }
 
     public void showDijBox() {
+        message.getChildren().clear();
         if (isEmpty())
             return;
+        clearButton.setVisible(false);
         newGraph.setText("On Draw");
         creatButton = false;
         djsBox.setVisible(!djsBox.isVisible());
@@ -328,13 +337,26 @@ public class AppController implements Initializable {
             return;
         if (isEmpty() && creatButton)
             return;
+        if (isExample && creatButton)
+            clearAction();
+        isExample = false;
         message.getChildren().clear();
         graph.clearHighlight();
         newGraph.setText(creatButton ? "On Draw" : "Off Draw");
         creatButton = !creatButton;
+        if (creatButton)
+            clearButton.setVisible(true);
+        else
+            clearButton.setVisible(false);
         DFSBox.setVisible(false);
         DPBox.setVisible(false);
         djsBox.setVisible(false);
+    }
+
+    public void clearAction(){
+        main.getChildren().clear();
+        graph.getVertices().removeAll(graph.getVertices());
+        graph.getEdges().removeAll(graph.getEdges());
     }
 
 
@@ -403,7 +425,17 @@ public class AppController implements Initializable {
 	}
 
     public void executeDP() {
+        message.getChildren().clear();
     	int getSourceDp = Integer.parseInt(DPGo.getText());
+        int size = graph.getVertices().size();
+        Text text;
+        if(getSourceDp >= size || getSourceDp < 0){
+            text = new Text("This vertex does not exist in the graph. Please select another source vertex.");
+            text.setStyle("-fx-font-size: 16px; -fx-fill: gold;");
+            message.getChildren().add(text);
+            return;
+        }
+        message.getChildren().clear();
     	Vertex temp2 = new Vertex();
     	temp2.setId(getSourceDp);
     	exploreDP(temp2);
@@ -456,13 +488,26 @@ public class AppController implements Initializable {
 	
 	         new Thread(task).start();
     	}
-			
+		else {
+            Text text;
+            text = new Text("Graph is not a Directed Acyclic Graph.");
+            text.setStyle("-fx-font-size: 16px; -fx-fill: gold;");
+            message.getChildren().add(text);
+        }
 	}
 
     public void executeDijkstra()
     {
         graph.clearHighlight();
-        int getSourceDij = Integer.parseInt(djsGo.getText());
+        int getSourceDij = Integer.parseInt(djsGo.getText());int size = graph.getVertices().size();
+        Text text;
+        if(getSourceDij >= size || getSourceDij < 0){
+            text = new Text("This vertex does not exist in the graph. Please select another source vertex.");
+            text.setStyle("-fx-font-size: 16px; -fx-fill: gold;");
+            message.getChildren().add(text);
+            return;
+        }
+        message.getChildren().clear();
         Vertex temp = new Vertex();
         temp.setId(getSourceDij);
         exploreDij(temp);
@@ -513,6 +558,11 @@ public class AppController implements Initializable {
     }
     
     public void showExample() {
+        clearAction();
+        isExample = true;
+        creatButton = false;
+        newGraph.setText("On Draw");
+        clearButton.setVisible(false);
 		Vertex node1 = new Vertex();
 		Vertex node2 = new Vertex();
 		Vertex node3 = new Vertex();
