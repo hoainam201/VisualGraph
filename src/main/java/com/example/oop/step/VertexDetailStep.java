@@ -20,7 +20,4 @@ public class VertexDetailStep extends soloStep {
         Graph.highlight(vertex, isHighlighted);
     }
 
-    public void back() {
-        Graph.highlight(vertex, !isHighlighted);
-    }
 }
