@@ -111,6 +111,8 @@ public class AppController implements Initializable {
     Robot robot = new Robot();
     Edge currentLine;
     long timeSpeed = 1000;
+    int currentStep, sizeStep;
+    ArrayList<PseudoStep> pseudoSteps = new ArrayList<>();
 
     static class InitMenu {
         TranslateTransition translateTransition;
@@ -373,6 +375,8 @@ public class AppController implements Initializable {
     public void pauseAction() {
         pauseButton.setText(isPause ? "Pause" : "Remuse");
         isPause = !isPause;
+        if (!isPause)
+            remuse();
     }
 
     public void setSpeed() {
@@ -391,10 +395,74 @@ public class AppController implements Initializable {
         });
     }
 
+    public void backAction() {
+        graph.clearHighlight();
+        isPause = true;
+        pauseButton.setText("Remuse");
+        if (currentStep > 0)
+            currentStep--;
+        for (int i = 0; i <= currentStep; i++) {
+            PseudoStep step = pseudoSteps.get(i);
+            codeTrace.getChildren().forEach(node -> node.setStyle("-fx-font-weight: normal"));
+            int idPseudo = Integer.parseInt(step.getText());
+            if (idPseudo != -1)
+                codeTrace.getChildren().get(idPseudo).setStyle("-fx-font-weight: bold");
+            for (soloStep s : step.getDetail()) {
+                if (s.getText().length() > 0) {
+                    status.getChildren().clear();
+                    status.getChildren().add(new Text(s.getText()));
+                }
+                s.run();
+            }
+        }
+    }
 
+    public void nextAction() {
+        isPause = true;
+        pauseButton.setText("Remuse");
+        next();
+    }
+
+
+    public void next() {
+        graph.clearHighlight();
+        if (currentStep < pseudoSteps.size() - 1)
+            currentStep++;
+        for (int i = 0; i <= currentStep; i++) {
+            PseudoStep step = pseudoSteps.get(i);
+            codeTrace.getChildren().forEach(node -> node.setStyle("-fx-font-weight: normal"));
+            int idPseudo = Integer.parseInt(step.getText());
+            if (idPseudo != -1)
+                codeTrace.getChildren().get(idPseudo).setStyle("-fx-font-weight: bold");
+            for (soloStep s : step.getDetail()) {
+                if (s.getText().length() > 0) {
+                    status.getChildren().clear();
+                    status.getChildren().add(new Text(s.getText()));
+                }
+                s.run();
+            }
+        }
+    }
+
+    public void remuse() {
+        Task<Void> task = new Task<>() {
+            @Override
+            public Void call() throws Exception {
+                while (currentStep < pseudoSteps.size() - 1) {
+                    if (creatButton || isPause)
+                        break;
+                    Platform.runLater(() -> next());
+                    Thread.sleep(timeSpeed);
+                }
+                return null;
+            }
+        };
+        new Thread(task).start();
+    }
 
     public void executeDFS() {
         graph.clearHighlight();
+        isPause = true;
         int getSourceDfs = Integer.parseInt(DFSGo.getText());
         int size = graph.getVertices().size();
         Text text;
@@ -407,6 +475,7 @@ public class AppController implements Initializable {
         message.getChildren().clear();
         Vertex temp = new Vertex();
         temp.setId(getSourceDfs);
+        currentStep = -1;
         exploreDFS(temp);
     }
 
@@ -417,53 +486,28 @@ public class AppController implements Initializable {
         dfs.setData(graph);
         dfs.falseAll();
         dfs.explore(vertex);
-        Task<Void> task = new Task<>() {
-            @Override
-            public Void call() throws Exception {
-                Platform.runLater(() -> codeTrace.getChildren().clear());
-                if (!initCodeTrace.isShow)
-                    showCodeTrace();
-                if (!initStatus.isShow)
-                    showStatus();
-                for (int i = 0; i < dfs.getPseudoCodes().size(); i++) {
-                    Text text = new Text(dfs.getPseudoCodes().get(i));
-                    text.setStyle("-fx-font-size: 16px;");
-                    Platform.runLater(() -> codeTrace.getChildren().add(text));
-                }
-                for (int i = 0; i < dfs.getPseudoSteps().size(); i++) {
-                    PseudoStep step = dfs.getPseudoSteps().get(i);
-//                for (PseudoStep step : dfs.getPseudoSteps()) {
-
-                    while (isPause) ;
-                    if (creatButton)
-                        break;
-                    Platform.runLater(() -> {
-                        codeTrace.getChildren().forEach(node -> node.setStyle("-fx-font-weight: normal"));
-                        int idPseudo = Integer.parseInt(step.getText());
-                        if (idPseudo != -1)
-                            codeTrace.getChildren().get(idPseudo).setStyle("-fx-font-weight: bold");
-                    });
-
-                    for (soloStep detail : step.getDetail()) {
-                        Platform.runLater(() -> {
-                            if (detail.getText().length() > 0) {
-                                status.getChildren().clear();
-                                status.getChildren().add(new Text(detail.getText()));
-                            }
-                            Platform.runLater(detail::run);
-                        });
-                    }
-                    Thread.sleep(timeSpeed);
-                }
-                return null;
-            }
-        };
-        new Thread(task).start();
+        pseudoSteps.clear();
+        for (PseudoStep p : dfs.getPseudoSteps()) {
+            pseudoSteps.add(p);
+        }
+        for (int i = 0; i < dfs.getPseudoCodes().size(); i++) {
+            Text text = new Text(dfs.getPseudoCodes().get(i));
+            text.setStyle("-fx-font-size: 16px;");
+            Platform.runLater(() -> codeTrace.getChildren().add(text));
+        }
+        codeTrace.getChildren().clear();
+        if (!initCodeTrace.isShow)
+            showCodeTrace();
+        if (!initStatus.isShow)
+            showStatus();
+        isPause = false;
+        remuse();
 
     }
 
     public void executeDP() {
         message.getChildren().clear();
+        isPause = true;
         int getSourceDp = Integer.parseInt(DPGo.getText());
         int size = graph.getVertices().size();
         Text text;
@@ -476,6 +520,7 @@ public class AppController implements Initializable {
         message.getChildren().clear();
         Vertex temp2 = new Vertex();
         temp2.setId(getSourceDp);
+        currentStep = -1;
         exploreDP(temp2);
         graph.clearHighlight();
     }
@@ -487,48 +532,22 @@ public class AppController implements Initializable {
         if (dp.isDAG()) {
             dp.topoSort();
             dp.explore(v);
-            Task<Void> task = new Task<>() {
-                @Override
-                public Void call() throws Exception {
-                    Platform.runLater(() -> codeTrace.getChildren().clear());
-                    if (!initCodeTrace.isShow)
-                        showCodeTrace();
-                    if (!initStatus.isShow)
-                        showStatus();
-                    for (int i = 0; i < dp.getPseudoCodes().size(); i++) {
-                        Text text = new Text(dp.getPseudoCodes().get(i));
-                        text.setStyle("-fx-font-size: 16px");
-                        Platform.runLater(() -> codeTrace.getChildren().add(text));
-                    }
-                    for (int i = 0; i < dp.getPseudoSteps().size(); i++) {
-                        PseudoStep step = dp.getPseudoSteps().get(i);
-//                    for (PseudoStep step : dp.getPseudoSteps()) {
-                        while (isPause) ;
-                        if (creatButton)
-                            break;
-                        Platform.runLater(() -> {
-                            codeTrace.getChildren().forEach(node -> node.setStyle("-fx-font-weight: normal"));
-                            int idPseudo = Integer.parseInt(step.getText());
-                            if (idPseudo != -1)
-                                codeTrace.getChildren().get(idPseudo).setStyle("-fx-font-weight: bold");
-                        });
-
-                        for (soloStep detail : step.getDetail()) {
-                            Platform.runLater(() -> {
-                                if (detail.getText().length() > 0) {
-                                    status.getChildren().clear();
-                                    status.getChildren().add(new Text(detail.getText()));
-                                }
-                                Platform.runLater(detail::run);
-                            });
-                        }
-                        Thread.sleep(timeSpeed);
-                    }
-                    return null;
-                }
-            };
-
-            new Thread(task).start();
+            pseudoSteps.clear();
+            for (PseudoStep p : dp.getPseudoSteps()) {
+                pseudoSteps.add(p);
+            }
+            codeTrace.getChildren().clear();
+            if (!initCodeTrace.isShow)
+                showCodeTrace();
+            if (!initStatus.isShow)
+                showStatus();
+            for (int i = 0; i < dp.getPseudoCodes().size(); i++) {
+                Text text = new Text(dp.getPseudoCodes().get(i));
+                text.setStyle("-fx-font-size: 16px");
+                Platform.runLater(() -> codeTrace.getChildren().add(text));
+            }
+            isPause = false;
+            remuse();
         } else {
             Text text;
             text = new Text("Graph is not a Directed Acyclic Graph.");
@@ -539,6 +558,7 @@ public class AppController implements Initializable {
 
     public void executeDijkstra() {
         graph.clearHighlight();
+        isPause = true;
         int getSourceDij = Integer.parseInt(djsGo.getText());
         int size = graph.getVertices().size();
         Text text;
@@ -551,6 +571,8 @@ public class AppController implements Initializable {
         message.getChildren().clear();
         Vertex temp = new Vertex();
         temp.setId(getSourceDij);
+        isPause = false;
+        currentStep = -1;
         exploreDij(temp);
     }
 
@@ -559,47 +581,22 @@ public class AppController implements Initializable {
 //        graph.highlightSource(vertex);
         dijkstra.setData(graph);
         dijkstra.explore(vertex);
-        Task<Void> task = new Task<>() {
-            @Override
-            public Void call() throws Exception {
-                Platform.runLater(() -> codeTrace.getChildren().clear());
-                if (!initCodeTrace.isShow)
-                    showCodeTrace();
-                if (!initStatus.isShow)
-                    showStatus();
-                for (int i = 0; i < dijkstra.getPseudoCodes().size(); i++) {
-                    Text text = new Text(dijkstra.getPseudoCodes().get(i));
-                    text.setStyle("-fx-font-size: 16px;");
-                    Platform.runLater(() -> codeTrace.getChildren().add(text));
-                }
-                for (int i = 0; i < dijkstra.getPseudoSteps().size(); i++) {
-                    PseudoStep step = dijkstra.getPseudoSteps().get(i);
-//                for (PseudoStep step : dijkstra.getPseudoSteps()) {
-                    while (isPause) ;
-                    if (creatButton)
-                        break;
-                    Platform.runLater(() -> {
-                        codeTrace.getChildren().forEach(node -> node.setStyle("-fx-font-weight: normal"));
-                        int idPseudo = Integer.parseInt(step.getText());
-                        if (idPseudo != -1)
-                            codeTrace.getChildren().get(idPseudo).setStyle("-fx-font-weight: bold");
-                    });
-
-                    for (soloStep detail : step.getDetail()) {
-                        Platform.runLater(() -> {
-                            if (detail.getText().length() > 0) {
-                                status.getChildren().clear();
-                                status.getChildren().add(new Text(detail.getText()));
-                            }
-                            Platform.runLater(detail::run);
-                        });
-                    }
-                    Thread.sleep(timeSpeed);
-                }
-                return null;
-            }
-        };
-        new Thread(task).start();
+        pseudoSteps.clear();
+        for (PseudoStep p : dijkstra.getPseudoSteps()) {
+            pseudoSteps.add(p);
+        }
+        codeTrace.getChildren().clear();
+        if (!initCodeTrace.isShow)
+            showCodeTrace();
+        if (!initStatus.isShow)
+            showStatus();
+        for (int i = 0; i < dijkstra.getPseudoCodes().size(); i++) {
+            Text text = new Text(dijkstra.getPseudoCodes().get(i));
+            text.setStyle("-fx-font-size: 16px;");
+            Platform.runLater(() -> codeTrace.getChildren().add(text));
+        }
+        isPause = false;
+        remuse();
 
     }
 
