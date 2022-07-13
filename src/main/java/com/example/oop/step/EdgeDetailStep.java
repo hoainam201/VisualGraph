@@ -19,4 +19,8 @@ public class EdgeDetailStep extends soloStep {
     public void run() {
         Graph.highlight(edge, isHighlighted);
     }
+    @Override
+    public void back(){
+        Graph.highlight(edge, !isHighlighted);
+    }
 }

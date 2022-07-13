@@ -72,6 +72,7 @@ public class MenuController implements Initializable {
         process.progressProperty().bind(task.progressProperty());
         new Thread(task).start();
 
+
     }
 
 }

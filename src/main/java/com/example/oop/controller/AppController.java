@@ -41,10 +41,7 @@ import javafx.util.Duration;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Observable;
-import java.util.Observer;
-import java.util.Random;
-import java.util.ResourceBundle;
+import java.util.*;
 
 public class AppController implements Initializable {
     @FXML
@@ -97,16 +94,23 @@ public class AppController implements Initializable {
     public Slider sliderSpeed;
     @FXML
     public Label messageSpeed;
+    @FXML
+    public Button pauseButton;
+
+    ArrayList<PseudoStep> pseudoStepArrayList = new ArrayList<>();
 
     private boolean panelVisable = false;
     private boolean isExample;
+    private boolean isPause = false;
+    private boolean isNext = false;
+    private boolean isBack = false;
 
     Graph graph = new Graph();
     private boolean isDrag = false;
     private boolean creatButton = false;
     Robot robot = new Robot();
     Edge currentLine;
-    long timeSpeed = 1;
+    long timeSpeed = 1000;
 
     static class InitMenu {
         TranslateTransition translateTransition;
@@ -240,7 +244,7 @@ public class AppController implements Initializable {
             node.setId(graph.getVertices().size());
             main.getChildren().add(node);
             graph.addVertex(node);
-            
+
             System.out.println(x + " " + y);
 
             node.setOnMouseEntered(mouseEvent1 -> node.requestFocus());
@@ -324,10 +328,10 @@ public class AppController implements Initializable {
         }
     }
 
-    public boolean isEmpty(){
+    public boolean isEmpty() {
         int size = graph.getVertices().size();
         Text text;
-        if (size == 0){
+        if (size == 0) {
             text = new Text("Graph cannot be empty.");
             text.setStyle("-fx-font-size: 16px; -fx-fill: gold;");
             message.getChildren().clear();
@@ -340,7 +344,7 @@ public class AppController implements Initializable {
 
     @FXML
     private void CreateGraph() {
-        if(isDrag)
+        if (isDrag)
             return;
         if (isEmpty() && creatButton)
             return;
@@ -360,53 +364,60 @@ public class AppController implements Initializable {
         djsBox.setVisible(false);
     }
 
-    public void clearAction(){
+    public void clearAction() {
         main.getChildren().clear();
         graph.getVertices().removeAll(graph.getVertices());
         graph.getEdges().removeAll(graph.getEdges());
     }
 
-    public void setSpeed(){
-        double x = sliderSpeed.getValue() * 1000;
+    public void pauseAction() {
+        pauseButton.setText(isPause ? "Pause" : "Remuse");
+        isPause = !isPause;
+    }
+
+    public void setSpeed() {
+        double x = 1000 / sliderSpeed.getValue();
         timeSpeed = (long) x;
         System.out.println("x" + sliderSpeed.getValue() + " " + timeSpeed);
         messageSpeed.setText(String.format("x%.1f", sliderSpeed.getValue()));
     }
 
-    public void moveSpeed(){
+    public void moveSpeed() {
         sliderSpeed.valueProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observableValue, Number number, Number t1) {
-                messageSpeed.setText(String.format("x%.1f",(Double) t1));
+                messageSpeed.setText(String.format("x%.1f", (Double) t1));
             }
         });
     }
 
-    public void executeDFS()
-    {
+
+
+    public void executeDFS() {
         graph.clearHighlight();
-    	int getSourceDfs = Integer.parseInt(DFSGo.getText());
+        int getSourceDfs = Integer.parseInt(DFSGo.getText());
         int size = graph.getVertices().size();
         Text text;
-        if(getSourceDfs >= size || getSourceDfs < 0){
+        if (getSourceDfs >= size || getSourceDfs < 0) {
             text = new Text("This vertex does not exist in the graph. Please select another source vertex.");
             text.setStyle("-fx-font-size: 16px; -fx-fill: gold;");
             message.getChildren().add(text);
             return;
         }
         message.getChildren().clear();
-    	Vertex temp = new Vertex();
-    	temp.setId(getSourceDfs);
-    	exploreDFS(temp);
+        Vertex temp = new Vertex();
+        temp.setId(getSourceDfs);
+        exploreDFS(temp);
     }
 
 
     public void exploreDFS(Vertex vertex) {
-    	DFS dfs = new DFS();
-    	dfs.setData(graph);
+        isNext = isBack = false;
+        DFS dfs = new DFS();
+        dfs.setData(graph);
         dfs.falseAll();
-    	dfs.explore(vertex);
-    	Task<Void> task = new Task<>() {
+        dfs.explore(vertex);
+        Task<Void> task = new Task<>() {
             @Override
             public Void call() throws Exception {
                 Platform.runLater(() -> codeTrace.getChildren().clear());
@@ -419,7 +430,13 @@ public class AppController implements Initializable {
                     text.setStyle("-fx-font-size: 16px;");
                     Platform.runLater(() -> codeTrace.getChildren().add(text));
                 }
-                for (PseudoStep step : dfs.getPseudoSteps()) {
+                for (int i = 0; i < dfs.getPseudoSteps().size(); i++) {
+                    PseudoStep step = dfs.getPseudoSteps().get(i);
+//                for (PseudoStep step : dfs.getPseudoSteps()) {
+
+                    while (isPause) ;
+                    if (creatButton)
+                        break;
                     Platform.runLater(() -> {
                         codeTrace.getChildren().forEach(node -> node.setStyle("-fx-font-weight: normal"));
                         int idPseudo = Integer.parseInt(step.getText());
@@ -441,88 +458,91 @@ public class AppController implements Initializable {
                 return null;
             }
         };
-         new Thread(task).start();
+        new Thread(task).start();
 
-	}
+    }
 
     public void executeDP() {
         message.getChildren().clear();
-    	int getSourceDp = Integer.parseInt(DPGo.getText());
+        int getSourceDp = Integer.parseInt(DPGo.getText());
         int size = graph.getVertices().size();
         Text text;
-        if(getSourceDp >= size || getSourceDp < 0){
+        if (getSourceDp >= size || getSourceDp < 0) {
             text = new Text("This vertex does not exist in the graph. Please select another source vertex.");
             text.setStyle("-fx-font-size: 16px; -fx-fill: gold;");
             message.getChildren().add(text);
             return;
         }
         message.getChildren().clear();
-    	Vertex temp2 = new Vertex();
-    	temp2.setId(getSourceDp);
-    	exploreDP(temp2);
-    	graph.clearHighlight();
+        Vertex temp2 = new Vertex();
+        temp2.setId(getSourceDp);
+        exploreDP(temp2);
+        graph.clearHighlight();
     }
-    
+
     public void exploreDP(Vertex v) {
-    	DP dp = new DP();
-    	dp.setData(graph);
-    	if(dp.isDAG())
-    	{
-	    	dp.topoSort();
-	    	dp.explore(v);
-	    	
-	    	Task<Void> task = new Task<>() {
-	            @Override
-	            public Void call() throws Exception {
-	                Platform.runLater(() -> codeTrace.getChildren().clear());
-	                if (!initCodeTrace.isShow)
-	                    showCodeTrace();
-	                if (!initStatus.isShow)
-	                    showStatus();
-	                for (int i = 0; i < dp.getPseudoCodes().size(); i++) {
-	                    Text text = new Text(dp.getPseudoCodes().get(i));
-	                    text.setStyle("-fx-font-size: 16px");
-	                    Platform.runLater(() -> codeTrace.getChildren().add(text));
-	                }
-	                for (PseudoStep step : dp.getPseudoSteps()) {
-	                    Platform.runLater(() -> {
-	                        codeTrace.getChildren().forEach(node -> node.setStyle("-fx-font-weight: normal"));
-	                        int idPseudo = Integer.parseInt(step.getText());
-	                        if (idPseudo != -1)
-	                            codeTrace.getChildren().get(idPseudo).setStyle("-fx-font-weight: bold");
-	                    });
-	
-	                    for (soloStep detail : step.getDetail()) {
-	                        Platform.runLater(() -> {
-	                            if (detail.getText().length() > 0) {
-	                                status.getChildren().clear();
-	                                status.getChildren().add(new Text(detail.getText()));
-	                            }
-	                            Platform.runLater(detail::run);
-	                        });
-	                    }
-	                    Thread.sleep(timeSpeed);
-	                }
-	                return null;
-	            }
-	        };
-	
-	         new Thread(task).start();
-    	}
-		else {
+        DP dp = new DP();
+        dp.setData(graph);
+        dp.falseAll();
+        if (dp.isDAG()) {
+            dp.topoSort();
+            dp.explore(v);
+            Task<Void> task = new Task<>() {
+                @Override
+                public Void call() throws Exception {
+                    Platform.runLater(() -> codeTrace.getChildren().clear());
+                    if (!initCodeTrace.isShow)
+                        showCodeTrace();
+                    if (!initStatus.isShow)
+                        showStatus();
+                    for (int i = 0; i < dp.getPseudoCodes().size(); i++) {
+                        Text text = new Text(dp.getPseudoCodes().get(i));
+                        text.setStyle("-fx-font-size: 16px");
+                        Platform.runLater(() -> codeTrace.getChildren().add(text));
+                    }
+                    for (int i = 0; i < dp.getPseudoSteps().size(); i++) {
+                        PseudoStep step = dp.getPseudoSteps().get(i);
+//                    for (PseudoStep step : dp.getPseudoSteps()) {
+                        while (isPause) ;
+                        if (creatButton)
+                            break;
+                        Platform.runLater(() -> {
+                            codeTrace.getChildren().forEach(node -> node.setStyle("-fx-font-weight: normal"));
+                            int idPseudo = Integer.parseInt(step.getText());
+                            if (idPseudo != -1)
+                                codeTrace.getChildren().get(idPseudo).setStyle("-fx-font-weight: bold");
+                        });
+
+                        for (soloStep detail : step.getDetail()) {
+                            Platform.runLater(() -> {
+                                if (detail.getText().length() > 0) {
+                                    status.getChildren().clear();
+                                    status.getChildren().add(new Text(detail.getText()));
+                                }
+                                Platform.runLater(detail::run);
+                            });
+                        }
+                        Thread.sleep(timeSpeed);
+                    }
+                    return null;
+                }
+            };
+
+            new Thread(task).start();
+        } else {
             Text text;
             text = new Text("Graph is not a Directed Acyclic Graph.");
             text.setStyle("-fx-font-size: 16px; -fx-fill: gold;");
             message.getChildren().add(text);
         }
-	}
+    }
 
-    public void executeDijkstra()
-    {
+    public void executeDijkstra() {
         graph.clearHighlight();
-        int getSourceDij = Integer.parseInt(djsGo.getText());int size = graph.getVertices().size();
+        int getSourceDij = Integer.parseInt(djsGo.getText());
+        int size = graph.getVertices().size();
         Text text;
-        if(getSourceDij >= size || getSourceDij < 0){
+        if (getSourceDij >= size || getSourceDij < 0) {
             text = new Text("This vertex does not exist in the graph. Please select another source vertex.");
             text.setStyle("-fx-font-size: 16px; -fx-fill: gold;");
             message.getChildren().add(text);
@@ -552,7 +572,12 @@ public class AppController implements Initializable {
                     text.setStyle("-fx-font-size: 16px;");
                     Platform.runLater(() -> codeTrace.getChildren().add(text));
                 }
-                for (PseudoStep step : dijkstra.getPseudoSteps()) {
+                for (int i = 0; i < dijkstra.getPseudoSteps().size(); i++) {
+                    PseudoStep step = dijkstra.getPseudoSteps().get(i);
+//                for (PseudoStep step : dijkstra.getPseudoSteps()) {
+                    while (isPause) ;
+                    if (creatButton)
+                        break;
                     Platform.runLater(() -> {
                         codeTrace.getChildren().forEach(node -> node.setStyle("-fx-font-weight: normal"));
                         int idPseudo = Integer.parseInt(step.getText());
@@ -577,7 +602,7 @@ public class AppController implements Initializable {
         new Thread(task).start();
 
     }
-    
+
     public void showExample() {
         clearAction();
         isExample = true;
@@ -588,318 +613,317 @@ public class AppController implements Initializable {
         random = random * 2 + 1;
         int randomInt = (int) random;
         System.out.println(randomInt);
-		if(randomInt == 1) {
-			Vertex node1 = new Vertex();
-			Vertex node2 = new Vertex();
-			Vertex node3 = new Vertex();
-			Vertex node4 = new Vertex();
-			Vertex node5 = new Vertex();
-			Vertex node6 = new Vertex();
-			Vertex node7 = new Vertex();
-			
-			node1.setLayoutX(471.0);
-			node1.setLayoutY(44.0);
-			node1.setId(graph.getVertices().size());
-			main.getChildren().add(node1);
-			graph.addVertex(node1.getID());
-			
-			node2.setLayoutX(371.800048828125);
-			node2.setLayoutY(189.60000610351562);
-			node2.setId(graph.getVertices().size());
-			main.getChildren().add(node2);
-			graph.addVertex(node2.getID());
-			
-			currentLine = new Edge();
-	        currentLine.setVisible(true);
-	        currentLine.setStartX(node1.getLayoutX() + 22);
-	        currentLine.setStartY(node1.getLayoutY() + 22);
-	        currentLine.setEndX(node2.getLayoutX() + 22);
-	        currentLine.setEndY(node2.getLayoutY() + 22);
-	        currentLine.setFrom(node1);
-	        currentLine.setTo(node2);
-	        int fromX = (int) currentLine.getFrom().getLayoutX();
-	        int fromY = (int) currentLine.getFrom().getLayoutY();
-	        int toX = (int) currentLine.getTo().getLayoutX();
-	        int toY = (int) currentLine.getTo().getLayoutY();
-	        int length = (int) Math.sqrt(Math.pow(fromX - toX, 2) + Math.pow(fromY - toY, 2)) / 50;
-	        currentLine.setLength(length, main);
-	        main.getChildren().add(currentLine);
-	        graph.addEdge(currentLine);
-	        
-			
-			node3.setLayoutX(576.5999755859375);
-			node3.setLayoutY(190.4000244140625);
-			node3.setId(graph.getVertices().size());
-			main.getChildren().add(node3);
-			graph.addVertex(node3.getID());
-			
-			currentLine = new Edge();
-	        currentLine.setVisible(true);
-	        currentLine.setStartX(node1.getLayoutX() + 22);
-	        currentLine.setStartY(node1.getLayoutY() + 22);
-	        currentLine.setEndX(node3.getLayoutX() + 22);
-	        currentLine.setEndY(node3.getLayoutY() + 22);
-	        currentLine.setFrom(node1);
-	        currentLine.setTo(node3);
-	        int fromX1 = (int) currentLine.getFrom().getLayoutX();
-	        int fromY1 = (int) currentLine.getFrom().getLayoutY();
-	        int toX1 = (int) currentLine.getTo().getLayoutX();
-	        int toY1 = (int) currentLine.getTo().getLayoutY();
-	        int length1 = (int) Math.sqrt(Math.pow(fromX1 - toX1, 2) + Math.pow(fromY1 - toY1, 2)) / 50;
-	        currentLine.setLength(length1, main);
-	        main.getChildren().add(currentLine);
-	        graph.addEdge(currentLine);
-			
-			node4.setLayoutX(292.5999755859375);
-			node4.setLayoutY(380.79998779296875);
-			node4.setId(graph.getVertices().size());
-			main.getChildren().add(node4);
-			graph.addVertex(node4.getID());
-			
-			currentLine = new Edge();
-	        currentLine.setVisible(true);
-	        currentLine.setStartX(node2.getLayoutX() + 22);
-	        currentLine.setStartY(node2.getLayoutY() + 22);
-	        currentLine.setEndX(node4.getLayoutX() + 22);
-	        currentLine.setEndY(node4.getLayoutY() + 22);
-	        currentLine.setFrom(node2);
-	        currentLine.setTo(node4);
-	        int fromX2 = (int) currentLine.getFrom().getLayoutX();
-	        int fromY2 = (int) currentLine.getFrom().getLayoutY();
-	        int toX2 = (int) currentLine.getTo().getLayoutX();
-	        int toY2 = (int) currentLine.getTo().getLayoutY();
-	        int length2 = (int) Math.sqrt(Math.pow(fromX2 - toX2, 2) + Math.pow(fromY2 - toY2, 2)) / 50;
-	        currentLine.setLength(length, main);
-	        main.getChildren().add(currentLine);
-	        graph.addEdge(currentLine);
-			
-			node5.setLayoutX(407.0);
-			node5.setLayoutY(380.79998779296875);
-			node5.setId(graph.getVertices().size());
-			main.getChildren().add(node5);
-			graph.addVertex(node5.getID());
-			
-			currentLine = new Edge();
-	        currentLine.setVisible(true);
-	        currentLine.setStartX(node2.getLayoutX() + 22);
-	        currentLine.setStartY(node2.getLayoutY() + 22);
-	        currentLine.setEndX(node5.getLayoutX() + 22);
-	        currentLine.setEndY(node5.getLayoutY() + 22);
-	        currentLine.setFrom(node2);
-	        currentLine.setTo(node5);
-	        int fromX3 = (int) currentLine.getFrom().getLayoutX();
-	        int fromY3 = (int) currentLine.getFrom().getLayoutY();
-	        int toX3 = (int) currentLine.getTo().getLayoutX();
-	        int toY3 = (int) currentLine.getTo().getLayoutY();
-	        int length3 = (int) Math.sqrt(Math.pow(fromX3 - toX3, 2) + Math.pow(fromY3 - toY3, 2)) / 50;
-	        currentLine.setLength(length3, main);
-	        main.getChildren().add(currentLine);
-	        graph.addEdge(currentLine);
-			
-			node6.setLayoutX(601.4000244140625);
-			node6.setLayoutY(376.8000183105469);
-			node6.setId(graph.getVertices().size());
-			main.getChildren().add(node6);
-			graph.addVertex(node6.getID());
-			
-			currentLine = new Edge();
-	        currentLine.setVisible(true);
-	        currentLine.setStartX(node3.getLayoutX() + 22);
-	        currentLine.setStartY(node3.getLayoutY() + 22);
-	        currentLine.setEndX(node6.getLayoutX() + 22);
-	        currentLine.setEndY(node6.getLayoutY() + 22);
-	        currentLine.setFrom(node3);
-	        currentLine.setTo(node6);
-	        int fromX4 = (int) currentLine.getFrom().getLayoutX();
-	        int fromY4 = (int) currentLine.getFrom().getLayoutY();
-	        int toX4 = (int) currentLine.getTo().getLayoutX();
-	        int toY4 = (int) currentLine.getTo().getLayoutY();
-	        int length4 = (int) Math.sqrt(Math.pow(fromX4 - toX4, 2) + Math.pow(fromY4 - toY4, 2)) / 50;
-	        currentLine.setLength(length4, main);
-	        main.getChildren().add(currentLine);
-	        graph.addEdge(currentLine);
-			
-			node7.setLayoutX(716.5999755859375);
-			node7.setLayoutY(371.20001220703125);
-			node7.setId(graph.getVertices().size());
-			main.getChildren().add(node7);
-			graph.addVertex(node7.getID());
-			
-			currentLine = new Edge();
-	        currentLine.setVisible(true);
-	        currentLine.setStartX(node3.getLayoutX() + 22);
-	        currentLine.setStartY(node3.getLayoutY() + 22);
-	        currentLine.setEndX(node7.getLayoutX() + 22);
-	        currentLine.setEndY(node7.getLayoutY() + 22);
-	        currentLine.setFrom(node3);
-	        currentLine.setTo(node7);
-	        int fromX5 = (int) currentLine.getFrom().getLayoutX();
-	        int fromY5 = (int) currentLine.getFrom().getLayoutY();
-	        int toX5 = (int) currentLine.getTo().getLayoutX();
-	        int toY5 = (int) currentLine.getTo().getLayoutY();
-	        int length5 = (int) Math.sqrt(Math.pow(fromX5 - toX5, 2) + Math.pow(fromY5 - toY5, 2)) / 50;
-	        currentLine.setLength(length5, main);
-	        main.getChildren().add(currentLine);
-	        graph.addEdge(currentLine);		
-		}
-		else {
-			Vertex node1 = new Vertex();
-			Vertex node2 = new Vertex();
-			Vertex node3 = new Vertex();
-			Vertex node4 = new Vertex();
-			Vertex node5 = new Vertex();
-			
+        if (randomInt == 1) {
+            Vertex node1 = new Vertex();
+            Vertex node2 = new Vertex();
+            Vertex node3 = new Vertex();
+            Vertex node4 = new Vertex();
+            Vertex node5 = new Vertex();
+            Vertex node6 = new Vertex();
+            Vertex node7 = new Vertex();
 
-			node1.setLayoutX(439.79998779296875);
-			node1.setLayoutY(20.000000000000007);
-			node1.setId(graph.getVertices().size());
-			main.getChildren().add(node1);
-			graph.addVertex(node1.getID());
-			
-			node2.setLayoutX(309.4000244140625);
-			node2.setLayoutY(192.0);
-			node2.setId(graph.getVertices().size());
-			main.getChildren().add(node2);
-			graph.addVertex(node2.getID());
-			
-			node3.setLayoutX(572.5999755859375);
-			node3.setLayoutY(186.39999389648438);
-			node3.setId(graph.getVertices().size());
-			main.getChildren().add(node3);
-			graph.addVertex(node3.getID());
-			
-			node4.setLayoutX(446.199951171875);
-			node4.setLayoutY(358.3999938964844);
-			node4.setId(graph.getVertices().size());
-			main.getChildren().add(node4);
-			graph.addVertex(node4.getID());
-			
-			node5.setLayoutX(678.2000122070312);
-			node5.setLayoutY(349.5999755859375);
-			node5.setId(graph.getVertices().size());
-			main.getChildren().add(node5);
-			graph.addVertex(node5.getID());
-			
-			currentLine = new Edge();
-	        currentLine.setVisible(true);
-	        currentLine.setStartX(node1.getLayoutX() + 22);
-	        currentLine.setStartY(node1.getLayoutY() + 22);
-	        currentLine.setEndX(node2.getLayoutX() + 22);
-	        currentLine.setEndY(node2.getLayoutY() + 22);
-	        currentLine.setFrom(node1);
-	        currentLine.setTo(node2);
-	        int fromX = (int) currentLine.getFrom().getLayoutX();
-	        int fromY = (int) currentLine.getFrom().getLayoutY();
-	        int toX = (int) currentLine.getTo().getLayoutX();
-	        int toY = (int) currentLine.getTo().getLayoutY();
-	        int length = (int) Math.sqrt(Math.pow(fromX - toX, 2) + Math.pow(fromY - toY, 2)) / 50;
-	        currentLine.setLength(length, main);
-	        main.getChildren().add(currentLine);
-	        graph.addEdge(currentLine);		
-	        
-	        currentLine = new Edge();
-	        currentLine.setVisible(true);
-	        currentLine.setStartX(node1.getLayoutX() + 22);
-	        currentLine.setStartY(node1.getLayoutY() + 22);
-	        currentLine.setEndX(node3.getLayoutX() + 22);
-	        currentLine.setEndY(node3.getLayoutY() + 22);
-	        currentLine.setFrom(node1);
-	        currentLine.setTo(node3);
-	        int fromX1 = (int) currentLine.getFrom().getLayoutX();
-	        int fromY1 = (int) currentLine.getFrom().getLayoutY();
-	        int toX1 = (int) currentLine.getTo().getLayoutX();
-	        int toY1 = (int) currentLine.getTo().getLayoutY();
-	        int length1 = (int) Math.sqrt(Math.pow(fromX1 - toX1, 2) + Math.pow(fromY1 - toY1, 2)) / 50;
-	        currentLine.setLength(length1, main);
-	        main.getChildren().add(currentLine);
-	        graph.addEdge(currentLine);
-			
-	        currentLine = new Edge();
-	        currentLine.setVisible(true);
-	        currentLine.setStartX(node3.getLayoutX() + 22);
-	        currentLine.setStartY(node3.getLayoutY() + 22);
-	        currentLine.setEndX(node2.getLayoutX() + 22);
-	        currentLine.setEndY(node2.getLayoutY() + 22);
-	        currentLine.setFrom(node3);
-	        currentLine.setTo(node2);
-	        int fromX2 = (int) currentLine.getFrom().getLayoutX();
-	        int fromY2 = (int) currentLine.getFrom().getLayoutY();
-	        int toX2 = (int) currentLine.getTo().getLayoutX();
-	        int toY2 = (int) currentLine.getTo().getLayoutY();
-	        int length2 = (int) Math.sqrt(Math.pow(fromX2 - toX2, 2) + Math.pow(fromY2 - toY2, 2)) / 50;
-	        currentLine.setLength(length2, main);
-	        main.getChildren().add(currentLine);
-	        graph.addEdge(currentLine);
-	        
-	        currentLine = new Edge();
-	        currentLine.setVisible(true);
-	        currentLine.setStartX(node3.getLayoutX() + 22);
-	        currentLine.setStartY(node3.getLayoutY() + 22);
-	        currentLine.setEndX(node4.getLayoutX() + 22);
-	        currentLine.setEndY(node4.getLayoutY() + 22);
-	        currentLine.setFrom(node3);
-	        currentLine.setTo(node4);
-	        int fromX3 = (int) currentLine.getFrom().getLayoutX();
-	        int fromY3 = (int) currentLine.getFrom().getLayoutY();
-	        int toX3 = (int) currentLine.getTo().getLayoutX();
-	        int toY3 = (int) currentLine.getTo().getLayoutY();
-	        int length3 = (int) Math.sqrt(Math.pow(fromX3 - toX3, 2) + Math.pow(fromY3 - toY3, 2)) / 50;
-	        currentLine.setLength(length3, main);
-	        main.getChildren().add(currentLine);
-	        graph.addEdge(currentLine);
-	        
-	        currentLine = new Edge();
-	        currentLine.setVisible(true);
-	        currentLine.setStartX(node3.getLayoutX() + 22);
-	        currentLine.setStartY(node3.getLayoutY() + 22);
-	        currentLine.setEndX(node5.getLayoutX() + 22);
-	        currentLine.setEndY(node5.getLayoutY() + 22);
-	        currentLine.setFrom(node3);
-	        currentLine.setTo(node5);
-	        int fromX4 = (int) currentLine.getFrom().getLayoutX();
-	        int fromY4 = (int) currentLine.getFrom().getLayoutY();
-	        int toX4 = (int) currentLine.getTo().getLayoutX();
-	        int toY4 = (int) currentLine.getTo().getLayoutY();
-	        int length4 = (int) Math.sqrt(Math.pow(fromX4 - toX4, 2) + Math.pow(fromY4 - toY4, 2)) / 50;
-	        currentLine.setLength(length4, main);
-	        main.getChildren().add(currentLine);
-	        graph.addEdge(currentLine);
-	        
-	        currentLine = new Edge();
-	        currentLine.setVisible(true);
-	        currentLine.setStartX(node2.getLayoutX() + 22);
-	        currentLine.setStartY(node2.getLayoutY() + 22);
-	        currentLine.setEndX(node4.getLayoutX() + 22);
-	        currentLine.setEndY(node4.getLayoutY() + 22);
-	        currentLine.setFrom(node2);
-	        currentLine.setTo(node4);
-	        int fromX5 = (int) currentLine.getFrom().getLayoutX();
-	        int fromY5 = (int) currentLine.getFrom().getLayoutY();
-	        int toX5 = (int) currentLine.getTo().getLayoutX();
-	        int toY5 = (int) currentLine.getTo().getLayoutY();
-	        int length5 = (int) Math.sqrt(Math.pow(fromX5 - toX5, 2) + Math.pow(fromY5 - toY5, 2)) / 50;
-	        currentLine.setLength(length5, main);
-	        main.getChildren().add(currentLine);
-	        graph.addEdge(currentLine);
-	        
-	        currentLine = new Edge();
-	        currentLine.setVisible(true);
-	        currentLine.setStartX(node5.getLayoutX() + 22);
-	        currentLine.setStartY(node5.getLayoutY() + 22);
-	        currentLine.setEndX(node4.getLayoutX() + 22);
-	        currentLine.setEndY(node4.getLayoutY() + 22);
-	        currentLine.setFrom(node5);
-	        currentLine.setTo(node4);
-	        int fromX6 = (int) currentLine.getFrom().getLayoutX();
-	        int fromY6 = (int) currentLine.getFrom().getLayoutY();
-	        int toX6 = (int) currentLine.getTo().getLayoutX();
-	        int toY6 = (int) currentLine.getTo().getLayoutY();
-	        int length6 = (int) Math.sqrt(Math.pow(fromX6 - toX6, 2) + Math.pow(fromY6 - toY2, 2)) / 50;
-	        currentLine.setLength(length6, main);
-	        main.getChildren().add(currentLine);
-	        graph.addEdge(currentLine);
-		}
-	}
+            node1.setLayoutX(471.0);
+            node1.setLayoutY(44.0);
+            node1.setId(graph.getVertices().size());
+            main.getChildren().add(node1);
+            graph.addVertex(node1.getID());
+
+            node2.setLayoutX(371.800048828125);
+            node2.setLayoutY(189.60000610351562);
+            node2.setId(graph.getVertices().size());
+            main.getChildren().add(node2);
+            graph.addVertex(node2.getID());
+
+            currentLine = new Edge();
+            currentLine.setVisible(true);
+            currentLine.setStartX(node1.getLayoutX() + 22);
+            currentLine.setStartY(node1.getLayoutY() + 22);
+            currentLine.setEndX(node2.getLayoutX() + 22);
+            currentLine.setEndY(node2.getLayoutY() + 22);
+            currentLine.setFrom(node1);
+            currentLine.setTo(node2);
+            int fromX = (int) currentLine.getFrom().getLayoutX();
+            int fromY = (int) currentLine.getFrom().getLayoutY();
+            int toX = (int) currentLine.getTo().getLayoutX();
+            int toY = (int) currentLine.getTo().getLayoutY();
+            int length = (int) Math.sqrt(Math.pow(fromX - toX, 2) + Math.pow(fromY - toY, 2)) / 50;
+            currentLine.setLength(length, main);
+            main.getChildren().add(currentLine);
+            graph.addEdge(currentLine);
+
+
+            node3.setLayoutX(576.5999755859375);
+            node3.setLayoutY(190.4000244140625);
+            node3.setId(graph.getVertices().size());
+            main.getChildren().add(node3);
+            graph.addVertex(node3.getID());
+
+            currentLine = new Edge();
+            currentLine.setVisible(true);
+            currentLine.setStartX(node1.getLayoutX() + 22);
+            currentLine.setStartY(node1.getLayoutY() + 22);
+            currentLine.setEndX(node3.getLayoutX() + 22);
+            currentLine.setEndY(node3.getLayoutY() + 22);
+            currentLine.setFrom(node1);
+            currentLine.setTo(node3);
+            int fromX1 = (int) currentLine.getFrom().getLayoutX();
+            int fromY1 = (int) currentLine.getFrom().getLayoutY();
+            int toX1 = (int) currentLine.getTo().getLayoutX();
+            int toY1 = (int) currentLine.getTo().getLayoutY();
+            int length1 = (int) Math.sqrt(Math.pow(fromX1 - toX1, 2) + Math.pow(fromY1 - toY1, 2)) / 50;
+            currentLine.setLength(length1, main);
+            main.getChildren().add(currentLine);
+            graph.addEdge(currentLine);
+
+            node4.setLayoutX(292.5999755859375);
+            node4.setLayoutY(380.79998779296875);
+            node4.setId(graph.getVertices().size());
+            main.getChildren().add(node4);
+            graph.addVertex(node4.getID());
+
+            currentLine = new Edge();
+            currentLine.setVisible(true);
+            currentLine.setStartX(node2.getLayoutX() + 22);
+            currentLine.setStartY(node2.getLayoutY() + 22);
+            currentLine.setEndX(node4.getLayoutX() + 22);
+            currentLine.setEndY(node4.getLayoutY() + 22);
+            currentLine.setFrom(node2);
+            currentLine.setTo(node4);
+            int fromX2 = (int) currentLine.getFrom().getLayoutX();
+            int fromY2 = (int) currentLine.getFrom().getLayoutY();
+            int toX2 = (int) currentLine.getTo().getLayoutX();
+            int toY2 = (int) currentLine.getTo().getLayoutY();
+            int length2 = (int) Math.sqrt(Math.pow(fromX2 - toX2, 2) + Math.pow(fromY2 - toY2, 2)) / 50;
+            currentLine.setLength(length, main);
+            main.getChildren().add(currentLine);
+            graph.addEdge(currentLine);
+
+            node5.setLayoutX(407.0);
+            node5.setLayoutY(380.79998779296875);
+            node5.setId(graph.getVertices().size());
+            main.getChildren().add(node5);
+            graph.addVertex(node5.getID());
+
+            currentLine = new Edge();
+            currentLine.setVisible(true);
+            currentLine.setStartX(node2.getLayoutX() + 22);
+            currentLine.setStartY(node2.getLayoutY() + 22);
+            currentLine.setEndX(node5.getLayoutX() + 22);
+            currentLine.setEndY(node5.getLayoutY() + 22);
+            currentLine.setFrom(node2);
+            currentLine.setTo(node5);
+            int fromX3 = (int) currentLine.getFrom().getLayoutX();
+            int fromY3 = (int) currentLine.getFrom().getLayoutY();
+            int toX3 = (int) currentLine.getTo().getLayoutX();
+            int toY3 = (int) currentLine.getTo().getLayoutY();
+            int length3 = (int) Math.sqrt(Math.pow(fromX3 - toX3, 2) + Math.pow(fromY3 - toY3, 2)) / 50;
+            currentLine.setLength(length3, main);
+            main.getChildren().add(currentLine);
+            graph.addEdge(currentLine);
+
+            node6.setLayoutX(601.4000244140625);
+            node6.setLayoutY(376.8000183105469);
+            node6.setId(graph.getVertices().size());
+            main.getChildren().add(node6);
+            graph.addVertex(node6.getID());
+
+            currentLine = new Edge();
+            currentLine.setVisible(true);
+            currentLine.setStartX(node3.getLayoutX() + 22);
+            currentLine.setStartY(node3.getLayoutY() + 22);
+            currentLine.setEndX(node6.getLayoutX() + 22);
+            currentLine.setEndY(node6.getLayoutY() + 22);
+            currentLine.setFrom(node3);
+            currentLine.setTo(node6);
+            int fromX4 = (int) currentLine.getFrom().getLayoutX();
+            int fromY4 = (int) currentLine.getFrom().getLayoutY();
+            int toX4 = (int) currentLine.getTo().getLayoutX();
+            int toY4 = (int) currentLine.getTo().getLayoutY();
+            int length4 = (int) Math.sqrt(Math.pow(fromX4 - toX4, 2) + Math.pow(fromY4 - toY4, 2)) / 50;
+            currentLine.setLength(length4, main);
+            main.getChildren().add(currentLine);
+            graph.addEdge(currentLine);
+
+            node7.setLayoutX(716.5999755859375);
+            node7.setLayoutY(371.20001220703125);
+            node7.setId(graph.getVertices().size());
+            main.getChildren().add(node7);
+            graph.addVertex(node7.getID());
+
+            currentLine = new Edge();
+            currentLine.setVisible(true);
+            currentLine.setStartX(node3.getLayoutX() + 22);
+            currentLine.setStartY(node3.getLayoutY() + 22);
+            currentLine.setEndX(node7.getLayoutX() + 22);
+            currentLine.setEndY(node7.getLayoutY() + 22);
+            currentLine.setFrom(node3);
+            currentLine.setTo(node7);
+            int fromX5 = (int) currentLine.getFrom().getLayoutX();
+            int fromY5 = (int) currentLine.getFrom().getLayoutY();
+            int toX5 = (int) currentLine.getTo().getLayoutX();
+            int toY5 = (int) currentLine.getTo().getLayoutY();
+            int length5 = (int) Math.sqrt(Math.pow(fromX5 - toX5, 2) + Math.pow(fromY5 - toY5, 2)) / 50;
+            currentLine.setLength(length5, main);
+            main.getChildren().add(currentLine);
+            graph.addEdge(currentLine);
+        } else {
+            Vertex node1 = new Vertex();
+            Vertex node2 = new Vertex();
+            Vertex node3 = new Vertex();
+            Vertex node4 = new Vertex();
+            Vertex node5 = new Vertex();
+
+
+            node1.setLayoutX(439.79998779296875);
+            node1.setLayoutY(20.000000000000007);
+            node1.setId(graph.getVertices().size());
+            main.getChildren().add(node1);
+            graph.addVertex(node1.getID());
+
+            node2.setLayoutX(309.4000244140625);
+            node2.setLayoutY(192.0);
+            node2.setId(graph.getVertices().size());
+            main.getChildren().add(node2);
+            graph.addVertex(node2.getID());
+
+            node3.setLayoutX(572.5999755859375);
+            node3.setLayoutY(186.39999389648438);
+            node3.setId(graph.getVertices().size());
+            main.getChildren().add(node3);
+            graph.addVertex(node3.getID());
+
+            node4.setLayoutX(446.199951171875);
+            node4.setLayoutY(358.3999938964844);
+            node4.setId(graph.getVertices().size());
+            main.getChildren().add(node4);
+            graph.addVertex(node4.getID());
+
+            node5.setLayoutX(678.2000122070312);
+            node5.setLayoutY(349.5999755859375);
+            node5.setId(graph.getVertices().size());
+            main.getChildren().add(node5);
+            graph.addVertex(node5.getID());
+
+            currentLine = new Edge();
+            currentLine.setVisible(true);
+            currentLine.setStartX(node1.getLayoutX() + 22);
+            currentLine.setStartY(node1.getLayoutY() + 22);
+            currentLine.setEndX(node2.getLayoutX() + 22);
+            currentLine.setEndY(node2.getLayoutY() + 22);
+            currentLine.setFrom(node1);
+            currentLine.setTo(node2);
+            int fromX = (int) currentLine.getFrom().getLayoutX();
+            int fromY = (int) currentLine.getFrom().getLayoutY();
+            int toX = (int) currentLine.getTo().getLayoutX();
+            int toY = (int) currentLine.getTo().getLayoutY();
+            int length = (int) Math.sqrt(Math.pow(fromX - toX, 2) + Math.pow(fromY - toY, 2)) / 50;
+            currentLine.setLength(length, main);
+            main.getChildren().add(currentLine);
+            graph.addEdge(currentLine);
+
+            currentLine = new Edge();
+            currentLine.setVisible(true);
+            currentLine.setStartX(node1.getLayoutX() + 22);
+            currentLine.setStartY(node1.getLayoutY() + 22);
+            currentLine.setEndX(node3.getLayoutX() + 22);
+            currentLine.setEndY(node3.getLayoutY() + 22);
+            currentLine.setFrom(node1);
+            currentLine.setTo(node3);
+            int fromX1 = (int) currentLine.getFrom().getLayoutX();
+            int fromY1 = (int) currentLine.getFrom().getLayoutY();
+            int toX1 = (int) currentLine.getTo().getLayoutX();
+            int toY1 = (int) currentLine.getTo().getLayoutY();
+            int length1 = (int) Math.sqrt(Math.pow(fromX1 - toX1, 2) + Math.pow(fromY1 - toY1, 2)) / 50;
+            currentLine.setLength(length1, main);
+            main.getChildren().add(currentLine);
+            graph.addEdge(currentLine);
+
+            currentLine = new Edge();
+            currentLine.setVisible(true);
+            currentLine.setStartX(node3.getLayoutX() + 22);
+            currentLine.setStartY(node3.getLayoutY() + 22);
+            currentLine.setEndX(node2.getLayoutX() + 22);
+            currentLine.setEndY(node2.getLayoutY() + 22);
+            currentLine.setFrom(node3);
+            currentLine.setTo(node2);
+            int fromX2 = (int) currentLine.getFrom().getLayoutX();
+            int fromY2 = (int) currentLine.getFrom().getLayoutY();
+            int toX2 = (int) currentLine.getTo().getLayoutX();
+            int toY2 = (int) currentLine.getTo().getLayoutY();
+            int length2 = (int) Math.sqrt(Math.pow(fromX2 - toX2, 2) + Math.pow(fromY2 - toY2, 2)) / 50;
+            currentLine.setLength(length2, main);
+            main.getChildren().add(currentLine);
+            graph.addEdge(currentLine);
+
+            currentLine = new Edge();
+            currentLine.setVisible(true);
+            currentLine.setStartX(node3.getLayoutX() + 22);
+            currentLine.setStartY(node3.getLayoutY() + 22);
+            currentLine.setEndX(node4.getLayoutX() + 22);
+            currentLine.setEndY(node4.getLayoutY() + 22);
+            currentLine.setFrom(node3);
+            currentLine.setTo(node4);
+            int fromX3 = (int) currentLine.getFrom().getLayoutX();
+            int fromY3 = (int) currentLine.getFrom().getLayoutY();
+            int toX3 = (int) currentLine.getTo().getLayoutX();
+            int toY3 = (int) currentLine.getTo().getLayoutY();
+            int length3 = (int) Math.sqrt(Math.pow(fromX3 - toX3, 2) + Math.pow(fromY3 - toY3, 2)) / 50;
+            currentLine.setLength(length3, main);
+            main.getChildren().add(currentLine);
+            graph.addEdge(currentLine);
+
+            currentLine = new Edge();
+            currentLine.setVisible(true);
+            currentLine.setStartX(node3.getLayoutX() + 22);
+            currentLine.setStartY(node3.getLayoutY() + 22);
+            currentLine.setEndX(node5.getLayoutX() + 22);
+            currentLine.setEndY(node5.getLayoutY() + 22);
+            currentLine.setFrom(node3);
+            currentLine.setTo(node5);
+            int fromX4 = (int) currentLine.getFrom().getLayoutX();
+            int fromY4 = (int) currentLine.getFrom().getLayoutY();
+            int toX4 = (int) currentLine.getTo().getLayoutX();
+            int toY4 = (int) currentLine.getTo().getLayoutY();
+            int length4 = (int) Math.sqrt(Math.pow(fromX4 - toX4, 2) + Math.pow(fromY4 - toY4, 2)) / 50;
+            currentLine.setLength(length4, main);
+            main.getChildren().add(currentLine);
+            graph.addEdge(currentLine);
+
+            currentLine = new Edge();
+            currentLine.setVisible(true);
+            currentLine.setStartX(node2.getLayoutX() + 22);
+            currentLine.setStartY(node2.getLayoutY() + 22);
+            currentLine.setEndX(node4.getLayoutX() + 22);
+            currentLine.setEndY(node4.getLayoutY() + 22);
+            currentLine.setFrom(node2);
+            currentLine.setTo(node4);
+            int fromX5 = (int) currentLine.getFrom().getLayoutX();
+            int fromY5 = (int) currentLine.getFrom().getLayoutY();
+            int toX5 = (int) currentLine.getTo().getLayoutX();
+            int toY5 = (int) currentLine.getTo().getLayoutY();
+            int length5 = (int) Math.sqrt(Math.pow(fromX5 - toX5, 2) + Math.pow(fromY5 - toY5, 2)) / 50;
+            currentLine.setLength(length5, main);
+            main.getChildren().add(currentLine);
+            graph.addEdge(currentLine);
+
+            currentLine = new Edge();
+            currentLine.setVisible(true);
+            currentLine.setStartX(node5.getLayoutX() + 22);
+            currentLine.setStartY(node5.getLayoutY() + 22);
+            currentLine.setEndX(node4.getLayoutX() + 22);
+            currentLine.setEndY(node4.getLayoutY() + 22);
+            currentLine.setFrom(node5);
+            currentLine.setTo(node4);
+            int fromX6 = (int) currentLine.getFrom().getLayoutX();
+            int fromY6 = (int) currentLine.getFrom().getLayoutY();
+            int toX6 = (int) currentLine.getTo().getLayoutX();
+            int toY6 = (int) currentLine.getTo().getLayoutY();
+            int length6 = (int) Math.sqrt(Math.pow(fromX6 - toX6, 2) + Math.pow(fromY6 - toY2, 2)) / 50;
+            currentLine.setLength(length6, main);
+            main.getChildren().add(currentLine);
+            graph.addEdge(currentLine);
+        }
+    }
 
     public void exitEvent(MouseEvent mouseEvent) {
         Node cur = mouseEvent.getPickResult().getIntersectedNode();

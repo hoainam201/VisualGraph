@@ -17,6 +17,10 @@ public class VertexDetailStep extends soloStep {
 
     @Override
     public void run() {
-        Graph.highlight(vertex,isHighlighted);
+        Graph.highlight(vertex, isHighlighted);
+    }
+
+    public void back() {
+        Graph.highlight(vertex, !isHighlighted);
     }
 }

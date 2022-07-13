@@ -14,5 +14,9 @@ public abstract class Step {
         this.text = text;
     }
 
-    public void run() {}
+    public void run() {
+    }
+
+    public void back() {
+    }
 }
